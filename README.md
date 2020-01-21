@@ -54,6 +54,14 @@ Project Organization
 
 --------
 
+Git large file storage note
+------------
+```
+brew install git-lfs
+#  this repository deals with large files
+```
+
+
 Install and Build
 ------------
 ```
