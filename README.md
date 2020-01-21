@@ -54,4 +54,27 @@ Project Organization
 
 --------
 
+Install and Build
+------------
+```
+#  for Mac OS
+brew install python3
+pip3 install mkvirtualenv
+git clone https://github.com/robinsonkwame/kente-cloth-authentication
+cd ./kente-cloth-authentication
+virtualenv kente
+source kente/bin/activate
+pip install -r requirements.txt
+```
+
+Install and Build
+------------
+```
+#  TBD as project develops, but basically:
+#  python ./src/make_dataset.py to generate training data into ./data/processed
+#  python ./src/models/train_model.py to train a model against that data, writes model to ./models too
+#  python ./src/models/predict_model.py pulls from ./model and predicts
+```
+
+
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
