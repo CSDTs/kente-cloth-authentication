@@ -67,7 +67,7 @@ source kente/bin/activate
 pip install -r requirements.txt
 ```
 
-Install and Build
+Run Project
 ------------
 ```
 #  TBD as project develops, but basically:
