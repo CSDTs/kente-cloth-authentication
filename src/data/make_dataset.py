@@ -3,7 +3,7 @@ import click
 import logging
 from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
-
+from process_image import generate_subsections
 
 @click.command()
 @click.argument('input_filepath', type=click.Path(exists=True))
@@ -14,6 +14,10 @@ def main(input_filepath, output_filepath):
     """
     logger = logging.getLogger(__name__)
     logger.info('making final data set from raw data')
+
+    generate_subsections(3123412,12,300,300,input_filepath, output_filepath,(0,0,0))
+    
+
 
 
 if __name__ == '__main__':
