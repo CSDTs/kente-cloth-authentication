@@ -6,16 +6,25 @@ from dotenv import find_dotenv, load_dotenv
 from process_image import generate_subsections
 
 @click.command()
+
+
 @click.argument('input_filepath', type=click.Path(exists=True))
 @click.argument('output_filepath', type=click.Path())
-def main(input_filepath, output_filepath):
+@click.option('--seed', prompt=True, type=int)
+@click.option('--n', prompt=True, type=int)
+@click.option('--width', prompt=True, type=int)
+@click.option('--height', prompt=True, type=int)
+@click.option('--xrotation', prompt=True, type=int)
+@click.option('--yrotation', prompt=True, type=int)
+@click.option('--zrotation', prompt=True, type=int)
+
+def main(input_filepath, output_filepath, seed, n, width, height, xrotation, yrotation, zrotation):
     """ Runs data processing scripts to turn raw data from (../raw) into
         cleaned data ready to be analyzed (saved in ../processed).
     """
     logger = logging.getLogger(__name__)
     logger.info('making final data set from raw data')
-
-    generate_subsections(3123412,12,300,300,input_filepath, output_filepath,(0,0,0))
+    generate_subsections(seed, n, width, width, input_filepath, output_filepath, (xrotation, yrotation, zrotation))
     
 
 
