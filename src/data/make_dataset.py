@@ -24,7 +24,7 @@ def main(input_filepath, output_filepath, seed, n, width, height, xrotation, yro
     """
     logger = logging.getLogger(__name__)
     logger.info('making final data set from raw data')
-    generate_subsections(seed, n, width, width, input_filepath, output_filepath, (xrotation, yrotation, zrotation))
+    generate_subsections(seed, n, width, height, input_filepath, output_filepath, (xrotation, yrotation, zrotation))
     
 
 
