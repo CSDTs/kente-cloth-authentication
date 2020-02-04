@@ -1,4 +1,3 @@
-from utils import *
 import numpy as np
 import cv2
 from math import pi
@@ -105,8 +104,8 @@ class ImageTransformer(object):
         # Final transformation matrix
         return np.dot(A2, np.dot(T, np.dot(R, A1)))
 
+        
 """ Utility Functions """
-
 def load_image(img_path, shape=None):
     img = cv2.imread(img_path)
     if shape is not None:
