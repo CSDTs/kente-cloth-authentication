@@ -29,7 +29,15 @@ def find_files(pattern, directory='.'):
     rule = re.compile(fnmatch.translate(pattern), re.IGNORECASE)
     return [name for name in os.listdir(directory) if rule.match(name)]
 
-def generate_subsections(seed, N, W, H, input_filepath, output_filepath, xyz = [0,0,0]):
+def generate_subsections(seed,
+                         N,
+                         W,
+                         H,
+                         input_filepath,
+                         output_filepath,
+                         target_width=None,
+                         target_height=None,
+                         xyz = [0,0,0]):
     """
     Usage
     ----------
@@ -47,6 +55,8 @@ def generate_subsections(seed, N, W, H, input_filepath, output_filepath, xyz = [
     H                 : Height of
     input_filepath    : Location of images to be processed
     output_filepath   : Location of subsections to be saved
+    target_width      : Downsampled width
+    target_height     : Downsampled height
     xyz               : Tuple containing desired rotation.
                     Default is (0,0,0)
 
@@ -86,13 +96,25 @@ def generate_subsections(seed, N, W, H, input_filepath, output_filepath, xyz = [
             lower = upper + H
 
             #Rotate image given x,y,z
-            rotated_img = img[0].rotate_along_axis(theta = xyz[0], phi=xyz[1], gamma=xyz[2])
+            rotated_img = img[0].rotate_along_axis(theta = xyz[0],
+                                                   phi=xyz[1],
+                                                   gamma=xyz[2])
 
             # Crop image based of subsection dimensions
-            cropped_img = rotated_img[upper:lower, left:right]
+            save_img = rotated_img[upper:lower, left:right]
+
+            # Resize if target_{width, height} provided
+            if target_height and target_width:
+                save_img =\
+                    img[0].downsample(
+                        image=save_img,
+                        width=target_width,
+                        height=target_height)
 
             # Save image to output filepath
-            save_image(output_filepath + img[1] + '_%d.jpg' % (x), cropped_img)
+            save_image(
+                output_filepath + img[1] + '_%d.jpg' % (x),
+                save_img)
 
 
 #Example
