@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 @click.command()
 
-@click.argument('input_filepath', type=click.Path(exists=True))
-@click.argument('output_filepath', type=click.Path())
+@click.option('--input_filepath', prompt=False, type=click.Path())
+@click.option('--output_filepath', prompt=False, type=click.Path())
 @click.option('--seed', prompt=True, type=int)
 @click.option('--n', prompt=True, type=int)
 @click.option('--width', prompt=True, type=int)
@@ -39,6 +39,9 @@ def main(input_filepath, output_filepath, seed, n, width, height, target_width, 
         target_width = None
     else:
         logger.info('target_width, target_height): {} x {}'.format(target_width, target_height))
+
+    if not input_filepath:
+        input_filepath = "./data/raw/"
 
     generate_interim(seed,
                      n,
@@ -128,7 +131,6 @@ def generate_processed(target_height,
 
 def cleanup():
     # These paths should be in a config file
-    print("calling cleanup!")
     # remove the fake, real directories now that we have subsections generated
     interim_directory = "./data/interim/"
     #  make fake, real subdirectories within iterim so we can
