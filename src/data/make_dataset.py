@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 @click.option('--input_filepath', prompt=False, type=click.Path())
 @click.option('--output_filepath', prompt=False, type=click.Path())
 @click.option('--seed', prompt=True, type=int)
-@click.option('--n', prompt=True, type=int)
+@click.option('--number_per_real', prompt=True, type=int)
+@click.option('--number_per_fake', prompt=True, type=int)
 @click.option('--width', prompt=True, type=int)
 @click.option('--height', prompt=True, type=int)
 @click.option('--target_width', prompt=False, type=int)
@@ -25,7 +26,7 @@ logger = logging.getLogger(__name__)
 @click.option('--xrotation', prompt=True, type=int)
 @click.option('--yrotation', prompt=True, type=int)
 @click.option('--zrotation', prompt=True, type=int)
-def main(input_filepath, output_filepath, seed, n, width, height, target_width, target_height, xrotation, yrotation, zrotation):
+def main(input_filepath, output_filepath, seed, width, height, target_width, target_height, xrotation, yrotation, zrotation, number_per_real, number_per_fake):
     """ Runs data processing scripts to turn raw data from (../raw) into
         cleaned data ready to be analyzed (saved in ../processed).
     """
@@ -44,7 +45,6 @@ def main(input_filepath, output_filepath, seed, n, width, height, target_width, 
         input_filepath = "./data/raw/"
 
     generate_interim(seed,
-                     n,
                      width,
                      height,
                      input_filepath,
@@ -56,13 +56,12 @@ def main(input_filepath, output_filepath, seed, n, width, height, target_width, 
                      zrotation,
                      real_prefix="real",
                      fake_prefix="fake",
-                     number_real=1,
-                     number_fake=1)
-    
+                     number_real=number_per_real,
+                     number_fake=number_per_fake)
     cleanup()
 
 
-def generate_interim(seed, n, width, height, input_filepath, output_filepath, target_width, target_height, xrotation, yrotation, zrotation, real_prefix, fake_prefix, number_real, number_fake):
+def generate_interim(seed, width, height, input_filepath, output_filepath, target_width, target_height, xrotation, yrotation, zrotation, real_prefix, fake_prefix, number_real, number_fake):
     # NOTE: Could make a lot more DRY but this is clearer and this is a 
     # single use util function
     interim_directory = "./data/interim/"
