@@ -81,7 +81,7 @@ Run Project
 #  TBD as project develops, but basically:
 # ... following the OC_NN MINST experiment, we generate
 # about 6,000 normal cases and 60 (1%) anomalous cases
-python src/data/make_dataset.py  --seed 0 --width 200 --height 200 --target_width 32 --target_height 32 --xrotation 40 --yrotation 40 --zrotation 10 --number_per_real 400 --number_per_fake 60
+python src/data/make_dataset.py  --seed 0 --width 200 --height 200 --target_width 32 --target_height 32 --xrotation 40 --yrotation 40 --zrotation 10 --number_per_real 500 --number_per_fake 22
 
 #  python ./src/models/train_model.py to train a model against that data, writes model to ./models too
 #  python ./src/models/predict_model.py pulls from ./model and predicts

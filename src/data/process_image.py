@@ -4,6 +4,10 @@ from image_transform import ImageTransformer, save_image, load_image
 import fnmatch
 import os
 import re
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 
 def find_files(pattern, directory='.'):
@@ -79,7 +83,7 @@ def generate_subsections(seed,
     # Appends tuple of ImageTranformer and image name for later use
     for filename in find_files('*.jpg', directory=input_filepath):
         img = ImageTransformer(input_filepath + filename, None)
-        img_name =filename.split('.')
+        img_name = filename.rsplit('.', 1)
         image_list.append((img, img_name[0]))
 
     # For each image, generate N number of subsections, randomly located on
@@ -88,6 +92,7 @@ def generate_subsections(seed,
     # Output will be saved to given file path.
     # NameOfImage_NumberOfSubsection.jpg
     for img in image_list:
+        logger.info('\t... processing {}'.format(img[1]))
         for x in range(0, N):
             # Offset size of subsection to avoid grabbing incomplete image.
             left = random.randint(0, img[0].width-W)
