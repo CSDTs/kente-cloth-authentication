@@ -1,0 +1,52 @@
+2/18
+--
+Surprised I didn't have a notes file in this repo but here's one.
+-
+I have a deep learning (CNN + SGD Nueral Net) example up and running in
+a different repo. It requires images placed in each of:
+    * training (1000)
+    * evaluation (1000)
+    * validation (1000)
+
+So I need to make a new interim function in make_dataset, maybe something
+like generate_three_data_splits, that creates those in interim.
+
+From there it's a matter of making sure they're named properly (fake, real) with
+a prefix. Let me check that one class svm can be batch learned and that
+it can take neagtive examples....
+
+okay, the one class i was aware of does not but there is a sgd one class (linear)
+and, also, I should look at the reference example
+
+Okay, so the reference example, here: https://hackernoon.com/one-class-classification-for-images-with-deep-features-be890c43455d
+Doesn't seem to really take in account negativer data except isolation forest
+has a contamination parameter
+
+Let me double check what the CNN does
+okay so the CNN needs data laid out in training, evaluation, and testing
+and generates features on that into output
+so it should look liek this:
+
+make_dataset has a new function, generate_three_data_splits
+this function creates a 
+training set of only real kente images
+a validation set of some real and some fake kente
+a testing set of some real and more/some fake kente
+---
+okay so the quickest way to this is to modify interim/main not to delete (only main should),
+copy out real to trainnig, and a mix otherwise to validation, testing
+
+Then I can run features as normal
+
+TheN I can run whichever/whatever of the above (even do parameter grid search if I care to)
+k, let's do the first part...
+-
+note, I'm wiping the virtualenv,
+doing
+```
+pipenv shell
+pip install -r requirements.txt
+```
+
+which works (but is pretty ugly)
+--

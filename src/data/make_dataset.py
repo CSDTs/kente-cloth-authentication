@@ -12,56 +12,79 @@ from process_image import generate_subsections
 
 logger = logging.getLogger(__name__)
 
-@click.command()
 
-@click.option('--input_filepath', prompt=False, type=click.Path())
-@click.option('--output_filepath', prompt=False, type=click.Path())
-@click.option('--seed', prompt=True, type=int)
-@click.option('--number_per_real', prompt=True, type=int)
-@click.option('--number_per_fake', prompt=True, type=int)
-@click.option('--width', prompt=True, type=int)
-@click.option('--height', prompt=True, type=int)
-@click.option('--target_width', prompt=False, type=int)
-@click.option('--target_height', prompt=False, type=int)
-@click.option('--xrotation', prompt=True, type=int)
-@click.option('--yrotation', prompt=True, type=int)
-@click.option('--zrotation', prompt=True, type=int)
+@click.group()
+@click.option('--input_filepath', type=click.Path())
+@click.option('--output_filepath', type=click.Path())
+@click.option('--seed', type=int)
+@click.option('--number_per_real', type=int)
+@click.option('--width', type=int)
+@click.option('--number_per_fake', type=int)
+@click.option('--height', type=int)
+@click.option('--target_width', type=int)
+@click.option('--target_height', type=int)
+@click.option('--xrotation', type=int)
+@click.option('--yrotation', type=int)
+@click.option('--zrotation', type=int)
 def main(input_filepath, output_filepath, seed, width, height, target_width, target_height, xrotation, yrotation, zrotation, number_per_real, number_per_fake):
     """ Runs data processing scripts to turn raw data from (../raw) into
         cleaned data ready to be analyzed (saved in ../processed).
     """
 
-    logger.info('making final data set from raw data')
+    # logger.info('making final data set from raw data')
 
-    # Set default arguments if not provided
-    if not target_height:
-        target_height = None
-    if not target_width:
-        target_width = None
-    else:
-        logger.info('target_width, target_height): {} x {}'.format(target_width, target_height))
+    # # Set default arguments if not provided
+    # if not target_height:
+    #     target_height = None
+    # if not target_width:
+    #     target_width = None
+    # else:
+    #     logger.info('target_width, target_height): {} x {}'.format(target_width, target_height))
 
-    if not input_filepath:
-        input_filepath = "./data/raw/"
+    # if not input_filepath:
+    #     input_filepath = "./data/raw/"
 
-    generate_interim(seed,
-                     width,
-                     height,
-                     input_filepath,
-                     output_filepath,
-                     target_height,
-                     target_width,
-                     xrotation,
-                     yrotation,
-                     zrotation,
-                     real_prefix="real",
-                     fake_prefix="fake",
-                     number_real=number_per_real,
-                     number_fake=number_per_fake)
-    cleanup()
+    # generate_interim(seed,
+    #                  width,
+    #                  height,
+    #                  input_filepath,
+    #                  output_filepath,
+    #                  target_height,
+    #                  target_width,
+    #                  xrotation,
+    #                  yrotation,
+    #                  zrotation,
+    #                  real_prefix="real",
+    #                  fake_prefix="fake",
+    #                  number_real=number_per_real,
+    #                  number_fake=number_per_fake)
 
+    # generate_processed(target_height, target_width)
+    # cleanup()
 
-def generate_interim(seed, width, height, input_filepath, output_filepath, target_width, target_height, xrotation, yrotation, zrotation, real_prefix, fake_prefix, number_real, number_fake):
+def load_image(img_path, shape=None):
+    img = cv2.imread(img_path, flags=1)
+    if shape is not None:
+        img = cv2.resize(img, shape)
+
+    return img
+
+@main.command()
+@click.option('--input_filepath', '-i', type=click.Path())
+@click.option('--output_filepath', '-o', type=click.Path())
+@click.option('--seed', type=int)
+@click.option('--number_per_real', type=int)
+@click.option('--number_per_fake', type=int)
+@click.option('--real_prefix', default="real")
+@click.option('--fake_prefix', default="fake")
+@click.option('--width', type=int)
+@click.option('--height', type=int)
+@click.option('--target_width', default=233,  type=int)
+@click.option('--target_height', default=233,  type=int)
+@click.option('--xrotation', type=int)
+@click.option('--yrotation', type=int)
+@click.option('--zrotation', type=int)
+def makeinterim(seed, width, height, input_filepath, output_filepath, target_width, target_height, xrotation, yrotation, zrotation, real_prefix, fake_prefix, number_per_real, number_per_fake):
     # NOTE: Could make a lot more DRY but this is clearer and this is a 
     # single use util function
     interim_directory = "./data/interim/"
@@ -79,8 +102,8 @@ def generate_interim(seed, width, height, input_filepath, output_filepath, targe
             shutil.copy(image, str(directory))
 
     #  ... generate subsections against both
-    for the_source_path, number_of_images in [(str(fake_interim_directory), number_fake),
-                                              (str(real_interim_directory), number_real)]:
+    for the_source_path, number_of_images in [(str(fake_interim_directory), number_per_fake),
+                                              (str(real_interim_directory), number_per_real)]:
         logger.info('... generating {} image(s) each in for {}'.format(number_of_images, the_source_path))
         generate_subsections(seed,
                              number_of_images,
@@ -91,17 +114,9 @@ def generate_interim(seed, width, height, input_filepath, output_filepath, targe
                              target_height,
                              target_width,
                              (xrotation, yrotation, zrotation))
-    
-    generate_processed(target_height, target_width)
 
-def load_image(img_path, shape=None):
-    img = cv2.imread(img_path, flags=1)
-    if shape is not None:
-        img = cv2.resize(img, shape)
 
-    return img
-
-def generate_processed(target_height,
+def makeprocessed(target_height,
                        target_width,
                        interim_directory="./data/interim/",
                        processed_directory="./data/processed/"):
