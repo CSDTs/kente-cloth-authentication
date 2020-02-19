@@ -50,3 +50,16 @@ pip install -r requirements.txt
 
 which works (but is pretty ugly)
 --
+
+ran with
+
+python src/data/make_dataset.py  makeinterim --seed 0 --number_per_real 325 --number_per_fake 125 --width 233 --height 233 --target_width 233 --target_height 233 --xrotation 20 --yrotation 30 --zrotation 3 -i ./data/raw/ -o ./interim/
+-
+
+okay, so now ./data/processed/ has
+training has    2525 real
+validation has  687 (500 real, 187 fake)
+testing has     688 (500 real, 188 fake)
+
+I should run the features generator and then go to bed.
+----

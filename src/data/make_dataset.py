@@ -70,6 +70,13 @@ def load_image(img_path, shape=None):
     return img
 
 @main.command()
+def generate_three_data_splits():
+    """
+    Currently just manually copy out
+    """
+    raise NotImplemented
+
+@main.command()
 @click.option('--input_filepath', '-i', type=click.Path())
 @click.option('--output_filepath', '-o', type=click.Path())
 @click.option('--seed', type=int)
@@ -114,6 +121,16 @@ def makeinterim(seed, width, height, input_filepath, output_filepath, target_wid
                              target_height,
                              target_width,
                              (xrotation, yrotation, zrotation))
+                             
+    fake_interim_directory = Path("./data/interim/fake/")
+    fake_interim_directory.mkdir(parents=True, exist_ok=True)
+    real_interim_directory = Path("./data/interim/real/")
+    real_interim_directory.mkdir(parents=True, exist_ok=True)
+
+    for directory in [fake_interim_directory, real_interim_directory]:
+        for the_file in directory.glob('*'):
+            the_file.unlink()
+        directory.rmdir() 
 
 
 def makeprocessed(target_height,
@@ -149,15 +166,6 @@ def cleanup():
     interim_directory = "./data/interim/"
     #  make fake, real subdirectories within iterim so we can
     # apply differetn parametrizations generate subsections w/o thinking
-    fake_interim_directory = Path("./data/interim/fake/")
-    fake_interim_directory.mkdir(parents=True, exist_ok=True)
-    real_interim_directory = Path("./data/interim/real/")
-    real_interim_directory.mkdir(parents=True, exist_ok=True)
-
-    for directory in [fake_interim_directory, real_interim_directory]:
-        for the_file in directory.glob('*'):
-            the_file.unlink()
-        directory.rmdir() 
 
     interim_directory = Path("./data/interim/")
     interim_directory.mkdir(parents=True, exist_ok=True)
