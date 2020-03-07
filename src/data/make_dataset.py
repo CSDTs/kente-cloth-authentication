@@ -102,6 +102,11 @@ def makeinterim(seed, width, height, input_filepath, output_filepath, target_wid
     real_interim_directory = Path("./data/interim/real/")
     real_interim_directory.mkdir(parents=True, exist_ok=True)
     
+    if not Path(input_filepath).exists():
+        print(f"Input path provided is: {input_filepath}")
+        return
+        #raise FileNotFoundError, "Input file path does not exist!"
+
     # Then we copy each type of image into its respective directory ...
     for prefix, directory in [(fake_prefix+'*', fake_interim_directory),
                               (real_prefix+'*', real_interim_directory)]:
@@ -122,21 +127,25 @@ def makeinterim(seed, width, height, input_filepath, output_filepath, target_wid
                              target_width,
                              (xrotation, yrotation, zrotation))
                              
-    fake_interim_directory = Path("./data/interim/fake/")
-    fake_interim_directory.mkdir(parents=True, exist_ok=True)
-    real_interim_directory = Path("./data/interim/real/")
-    real_interim_directory.mkdir(parents=True, exist_ok=True)
-
+    # ... finally, we clean up the interim directories
     for directory in [fake_interim_directory, real_interim_directory]:
         for the_file in directory.glob('*'):
             the_file.unlink()
         directory.rmdir() 
 
 
+@main.command()
+@click.option('--target_height', type=int)
+@click.option('--target_width', type=int)
+@click.option('--interim_directory', '-i', type=str)
+@click.option('--processed_directory', '-o', type=str)
 def makeprocessed(target_height,
-                       target_width,
-                       interim_directory="./data/interim/",
-                       processed_directory="./data/processed/"):
+                  target_width,
+                  interim_directory="./data/interim/",
+                  processed_directory="./data/processed/"):
+    #  This function provides a more machine readable format for the pictures
+    # but isn't really needed since makeinterim and Keras functions can work
+    # well enough together
     number_of_images = len(list(Path('./data/interim/').glob('*.jpg')))
 
     # an RGB array for each image, of target height and width
@@ -159,7 +168,7 @@ def makeprocessed(target_height,
     #  can read back in with 
     # image_array = np.load('./data/processed/*.npy', allow_pickle=True) 
 
-
+@main.command()
 def cleanup():
     # These paths should be in a config file
     # remove the fake, real directories now that we have subsections generated

@@ -59,7 +59,22 @@ python src/data/make_dataset.py  makeinterim --seed 0 --number_per_real 325 --nu
 okay, so now ./data/processed/ has
 training has    2525 real
 validation has  687 (500 real, 187 fake)
-testing has     688 (500 real, 188 fake)
+evaluation has     688 (500 real, 188 fake)
 
 I should run the features generator and then go to bed.
 ----
+2/19
+
+okay, had to fix a bug in the feature genreator to work with kente related paths
+
+What I'll do now is start running the SGD ... hmm i can't because train 
+explicitly has no fake examples. I guess I can copy out 88 fake from testing
+just to get the thing running and I can email out an accuracy point?
+okay, moved
+
+now let's run train.py
+
+--
+getting 73% ish
+
+--

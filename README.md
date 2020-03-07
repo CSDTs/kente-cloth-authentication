@@ -78,7 +78,30 @@ pip install -r requirements.txt
 Run Project
 ------------
 ```
-#  TBD as project develops, but basically:
+# Here we show how to generate a numerically balanced dataset,
+# note that the fake kente distribution is restricted since samples are drawn
+# from across 3 or 4 instanes, not the 10+ authentic kente instances.
+#
+# These values assume 3 fake kente source images and 14 authentic kente images
+#
+# So for 14*x = 3*y we have y = x 14/3 ~ 5x
+# Let's take on the order of 1000 authentic kente, then we have ~355 instances
+# from each fake kente, so lets fudge those numbers and have
+# 
+# 14*71=994 ~= 3*330=990 which is basically balanced, then
+# Note: The width and height are set to the input size of ImageNet CNNs
+
+# First we generate interim images ...
+python src/data/make_dataset.py  makeinterim -i ./data/raw/ --seed 0 --width 224 --height 224 --target_width 224 --target_height 224 --xrotation 40 --yrotation 40 --zrotation 10 --number_per_real 71 --number_per_fake 330
+
+# We then manually divide that up into train, validation and evaluation sets.
+
+# ... then we erase any data interim with 
+python src/data/make_dataset.py  cleanup
+
+
+
+#  OLD ignore
 # ... following the OC_NN MINST experiment, we generate
 # about 6,000 normal cases and 60 (1%) anomalous cases
 python src/data/make_dataset.py  --seed 0 --width 200 --height 200 --target_width 32 --target_height 32 --xrotation 40 --yrotation 40 --zrotation 10 --number_per_real 500 --number_per_fake 22
