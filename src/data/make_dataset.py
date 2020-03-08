@@ -194,6 +194,18 @@ def makeprocessed(interim_directory="./data/interim/",
         )
     test_groups = inlier_test_groups | outlier_test_groups
 
+    # ... finally we split the remaining data into even training and valdiation
+    validation_indices, training_indices =\
+            next(
+                StratifiedShuffleSplit(random_state=42,
+                                       n_splits=1,
+                                       test_size=0.5).split(
+                                       sampling_frame.query('group not in @test_groups')\
+                                                     .group,
+                                       sampling_frame.query('group not in @test_groups')\
+                                                     .y)
+            )
+
     for file_path in interim_directory.glob('*.jpg'):
         label = file_path.name.split('_')[0]
         group = file_path.name.rsplit('_',1)[0]
@@ -204,14 +216,8 @@ def makeprocessed(interim_directory="./data/interim/",
                         str(evaluation_directory/file_path.name))
             #the_file.unlink()
 
-    # ... finally we split the remaining data into even training and valdiation
-    validation_group =\
-            sampling_frame.sample(frac=1, random_state=42)\
-                          .query(f'group not in @test_groups')\
-                          .sample(frac=0.5, random_state=42)
 
-    training_group =\
-        sampling_frame[!validation_group]
+    
 
 @main.command()
 def cleanup():
