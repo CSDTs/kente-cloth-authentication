@@ -9,6 +9,7 @@ import numpy as np
 from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
 from process_image import generate_subsections
+from sklearn.model_selection import StratifiedShuffleSplit
 
 logger = logging.getLogger(__name__)
 
@@ -135,22 +136,36 @@ def makeinterim(seed, width, height, input_filepath, output_filepath, target_wid
 
 
 @main.command()
-@click.option('--target_height', type=int)
-@click.option('--target_width', type=int)
 @click.option('--interim_directory', '-i', type=str)
 @click.option('--processed_directory', '-o', type=str)
-def makeprocessed(target_height,
-                  target_width,
-                  interim_directory="./data/interim/",
-                  processed_directory="./data/processed/"):
-    #  This function provides a more machine readable format for the pictures
-    # but isn't really needed since makeinterim and Keras functions can work
-    # well enough together
+@click.option('--number_outlier_test_groups', '-notg', type=int, default=1)
+@click.option('--number_inlier_test_groups', '-nitg', type=int, default=4)
+@click.option('--inlier', '-inl', default=1 , type=int)
+@click.option('--outlier', '-out', default=-1 , type=int)
+def makeprocessed(interim_directory="./data/interim/",
+                  processed_directory="./data/processed/",
+                  preserve_shuffle=False,
+                  inlier=1,
+                  outlier=-1):
+    #  This function copies out interim images into training, evaluation and validation
+    # training datasets into processed.
+    #  Oriented towards designs sampling from raw images. 
+    # Sampling can be shuffled or taken as is for out of sample validation, evaluation
     number_of_images = len(list(Path('./data/interim/').glob('*.jpg')))
+    outlier_test_groups = set()
+    inlier_test_groups = set()
+    the_groups = []
+    for file_name in Path('./data/interim/').glob('*.jpg'):
+        label = file_name.name.split('_')[0]
+        group = file_name.name.rsplit('_',1)[0]
+        if label == 'fake':
+            outlier_test_groups.update([group])
+        if label == 'real':
+            inlier_test_groups.update([group])
+        the_groups.append(group)
 
-    # an RGB array for each image, of target height and width
-    image_array = np.zeros((number_of_images, target_height, target_width, 3))
-    class_array = np.zeros(number_of_images)
+    y = np.full((number_of_images,1), inlier)
+    group = np.zeros(y.shape[0])  # for group or random 
     filename_array = []
     for index, the_image in enumerate(Path('./data/interim/').glob('*.jpg')):
         image_name = the_image.name

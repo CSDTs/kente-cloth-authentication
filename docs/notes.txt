@@ -78,3 +78,8 @@ now let's run train.py
 getting 73% ish
 
 --
+
+3/8
+Wanting to do a stratified group split, as in
+https://stackoverflow.com/questions/56872664/complex-dataset-split-stratifiedgroupshufflesplit
+
