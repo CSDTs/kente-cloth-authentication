@@ -139,23 +139,29 @@ def makeinterim(seed, width, height, input_filepath, output_filepath, target_wid
 @main.command()
 @click.option('--interim_directory', '-i', type=str)
 @click.option('--processed_directory', '-o', type=str)
+@click.option('--evaluation_directory', '-e', type=str)
 @click.option('--number_outlier_test_groups', '-notg', type=int, default=1)
 @click.option('--number_inlier_test_groups', '-nitg', type=int, default=4)
 @click.option('--inlier', '-inl', default=1 , type=int)
 @click.option('--outlier', '-out', default=-1 , type=int)
 def makeprocessed(interim_directory="./data/interim/",
                   processed_directory="./data/processed/",
+                  evaluation_directory="./data/processed/evaluation/", 
                   preserve_shuffle=False,
                   inlier=1,
                   outlier=-1):
+
+    interim_directory = Path(interim_directory)
+    evaluation_directory = Path(evaluation_directory)
+    evaluation_directory.mkdir(exist_ok=True)
     #  This function copies out interim images into training, evaluation and validation
     # training datasets into processed.
     #  Oriented towards designs sampling from raw images. 
     # Sampling is done on a group basis so that testing is done on out of sample groups
-    number_of_images = len(list(Path('./data/interim/').glob('*.jpg')))
+    number_of_images = len(list(interim_directory.glob('*.jpg')))
     y = np.full((number_of_images,), inlier)
     the_groups = []
-    for index, file_name in enumerate(Path(interim_directory).glob('*.jpg')):
+    for index, file_name in enumerate(interim_directory.glob('*.jpg')):
         label = file_name.name.split('_')[0]
         group = file_name.name.rsplit('_',1)[0]
         if label == 'fake':
@@ -186,37 +192,26 @@ def makeprocessed(interim_directory="./data/interim/",
                   .group\
                   .unique()[:number_outlier_test_groups]
         )
+    test_groups = inlier_test_groups | outlier_test_groups
 
-    # ... generate and save evaluation sample
-    for image in Path(interim_directory):
-        shutil.copy(image, str(directory))
+    for file_path in interim_directory.glob('*.jpg'):
+        label = file_path.name.split('_')[0]
+        group = file_path.name.rsplit('_',1)[0]
 
-
-    group = np.zeros(y.shape[0])  # for group or random 
-    filename_array = []
-    for file_name in enumerate(Path('./data/interim/').glob('*.jpg')):
-        label = file_name.name.split('_')[0]
-        group = file_name.name.rsplit('_',1)[0]
-
-        if group in (inlier_test_groups, outlier_test_groups):
+        if group in test_groups:
             #  ... copy to processed/evaluation
             shutil.copy(str(file_name),
-                        processed_directory+'/'+'evaluation')
-            the_file.unlink()
-        else:
-            # ... else we copy to processed and split out later
-            shutil.copy(file_name, processed_directory)
+                        str(evaluation_directory/file_path.name))
+            #the_file.unlink()
 
+    # ... finally we split the remaining data into even training and valdiation
+    validation_group =\
+            sampling_frame.sample(frac=1, random_state=42)\
+                          .query(f'group not in @test_groups')\
+                          .sample(frac=0.5, random_state=42)
 
-
-
-    image_array.dump(processed_directory+'images.npy')
-    class_array.dump(processed_directory+'classes.npy')
-    with open(processed_directory+"filenames.json", "w") as obj:
-        json.dump(filename_array, obj)
-
-    #  can read back in with 
-    # image_array = np.load('./data/processed/*.npy', allow_pickle=True) 
+    training_group =\
+        sampling_frame[!validation_group]
 
 @main.command()
 def cleanup():
