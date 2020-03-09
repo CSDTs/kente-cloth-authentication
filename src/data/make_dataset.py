@@ -171,16 +171,19 @@ def makeprocessed(interim_directory="./data/interim/",
     number_of_images = len(list(interim_directory.glob('*.jpg')))
     y = np.full((number_of_images,), inlier)
     the_groups = []
+    the_file_paths = []
     for index, file_name in enumerate(interim_directory.glob('*.jpg')):
         label = file_name.name.split('_')[0]
         group = file_name.name.rsplit('_',1)[0]
         if label == 'fake':
             y[index] = outlier
         the_groups.append(group)
+        the_file_paths.append(file_name)
 
     sampling_frame =\
         pd.DataFrame(
             {"group": the_groups,
+            "file_path": the_file_paths,
              "y": y}
         )
 
@@ -221,25 +224,28 @@ def makeprocessed(interim_directory="./data/interim/",
                                        sampling_frame.query('group not in @test_groups')\
                                                      .y)
             )
-    validation_indices = set(validation_indices)
-    training_indices = set(training_indices)  # for efficient look up 
 
-    for index, file_path in zip(chain.from_iterable((validation_indices,
-                                                           training_indices)),
-                                interim_directory.glob('*.jpg')):
-        label = file_path.name.split('_')[0]
-        group = file_path.name.rsplit('_',1)[0]
+    copy_to_directory = validation_directory
+    sampling_frame.loc[validation_indices]\
+                  .apply(lambda row: shutil.copy(
+                      str(row.file_path),
+                      str(copy_to_directory/row.file_path.name)),
+                         axis=1)
 
-        copy_to_directory = None
-        if group in test_groups:
-            copy_to_directory = evaluation_directory
-        elif index in validation_indices:
-            copy_to_directory = validation_directory
-        elif index in training_indices:
-            copy_to_directory = training_directory
+    copy_to_directory = training_directory
+    sampling_frame.loc[training_indices]\
+                  .apply(lambda row: shutil.copy(
+                      str(row.file_path),
+                      str(copy_to_directory/row.file_path.name)),
+                         axis=1)
 
-        shutil.copy(str(file_path), str(copy_to_directory/file_path.name))
-        #file_path.unlink()
+    copy_to_directory = evaluation_directory
+    sampling_frame.query('group in @test_groups')\
+                  .apply(lambda row: shutil.copy(
+                      str(row.file_path),
+                      str(copy_to_directory/row.file_path.name)),
+                         axis=1)
+
 
 @main.command()
 def cleanup():

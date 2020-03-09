@@ -83,3 +83,19 @@ getting 73% ish
 Wanting to do a stratified group split, as in
 https://stackoverflow.com/questions/56872664/complex-dataset-split-stratifiedgroupshufflesplit
 
+---
+3/9
+
+There's something off about the file counts
+
+In [462]: len(list(chain.from_iterable((validation_indices, training_indices))))                                                                     
+Out[462]: 1370
+
+In [463]: len(list(interim_directory.glob('*.jpg')))                                                                                                 
+Out[463]: 1984
+
+but the indices are indirectly derived from the interim_dir list
+
+So, that's actualy okay, since the gap is actually the evaluation set
+but I think I need to store the whole file path and just go off of that,
+when I indirectly link the glob() and the index things go awry
