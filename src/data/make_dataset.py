@@ -7,10 +7,11 @@ import shutil
 import json
 import numpy as np
 from pathlib import Path
-from dotenv import find_dotenv, load_dotenv
-from process_image import generate_subsections
-import pandas as pd
 from sklearn.model_selection import StratifiedShuffleSplit
+from process_image import generate_subsections
+from dotenv import find_dotenv, load_dotenv
+from itertools import chain  
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -140,24 +141,33 @@ def makeinterim(seed, width, height, input_filepath, output_filepath, target_wid
 @click.option('--interim_directory', '-i', type=str)
 @click.option('--processed_directory', '-o', type=str)
 @click.option('--evaluation_directory', '-e', type=str)
+@click.option('--training_directory', '-e', type=str)
+@click.option('--validation_directory', '-e', type=str)
 @click.option('--number_outlier_test_groups', '-notg', type=int, default=1)
 @click.option('--number_inlier_test_groups', '-nitg', type=int, default=4)
 @click.option('--inlier', '-inl', default=1 , type=int)
 @click.option('--outlier', '-out', default=-1 , type=int)
 def makeprocessed(interim_directory="./data/interim/",
                   processed_directory="./data/processed/",
-                  evaluation_directory="./data/processed/evaluation/", 
+                  evaluation_directory="./data/processed/evaluation/",
+                  training_directory="./data/processed/training/",
+                  validation_directory="./data/processed/validation/",
                   preserve_shuffle=False,
                   inlier=1,
                   outlier=-1):
+    #  This function copies out interim images into training, evaluation and validation
+    # training datasets into processed.
 
     interim_directory = Path(interim_directory)
     evaluation_directory = Path(evaluation_directory)
     evaluation_directory.mkdir(exist_ok=True)
-    #  This function copies out interim images into training, evaluation and validation
-    # training datasets into processed.
-    #  Oriented towards designs sampling from raw images. 
-    # Sampling is done on a group basis so that testing is done on out of sample groups
+
+    training_directory = Path(training_directory)
+    training_directory.mkdir(exist_ok=True)
+
+    validation_directory = Path(validation_directory)
+    validation_directory.mkdir(exist_ok=True)
+
     number_of_images = len(list(interim_directory.glob('*.jpg')))
     y = np.full((number_of_images,), inlier)
     the_groups = []
@@ -174,9 +184,15 @@ def makeprocessed(interim_directory="./data/interim/",
              "y": y}
         )
 
-    #  to generate evaluation samples and split the rest into training,
-    # we shuffle the unique array and take the first N group names. The user is
-    # indirectly responsible for dataset balance via the total number of samples available
+    #  ... we split this up into evaluation (testing) and then the remaining we
+    # split into validation and training. We foucs top down on how
+    # many inlier and outlier groups the evaluation set should have, randomly chose those
+    # then split the remaining instances 50%/50% to create the validation, training
+    # groups.
+    #
+    # This assumes that the evaluation groups represent a balanced set; the remaining
+    # data is stratified so that's much more balanced by design. If the original 
+    # data is balanced (which is is in my case) then everything will be roughly balanced 
     inlier_test_groups =\
         set(
             sampling_frame.sample(frac=1, random_state=42)\
@@ -194,7 +210,7 @@ def makeprocessed(interim_directory="./data/interim/",
         )
     test_groups = inlier_test_groups | outlier_test_groups
 
-    # ... finally we split the remaining data into even training and valdiation
+    # ... finally we split the remaining data into balanced training and valdiation
     validation_indices, training_indices =\
             next(
                 StratifiedShuffleSplit(random_state=42,
@@ -205,19 +221,25 @@ def makeprocessed(interim_directory="./data/interim/",
                                        sampling_frame.query('group not in @test_groups')\
                                                      .y)
             )
+    validation_indices = set(validation_indices)
+    training_indices = set(training_indices)  # for efficient look up 
 
-    for file_path in interim_directory.glob('*.jpg'):
+    for index, file_path in zip(chain.from_iterable((validation_indices,
+                                                           training_indices)),
+                                interim_directory.glob('*.jpg')):
         label = file_path.name.split('_')[0]
         group = file_path.name.rsplit('_',1)[0]
 
+        copy_to_directory = None
         if group in test_groups:
-            #  ... copy to processed/evaluation
-            shutil.copy(str(file_name),
-                        str(evaluation_directory/file_path.name))
-            #the_file.unlink()
+            copy_to_directory = evaluation_directory
+        elif index in validation_indices:
+            copy_to_directory = validation_directory
+        elif index in training_indices:
+            copy_to_directory = training_directory
 
-
-    
+        shutil.copy(str(file_path), str(copy_to_directory/file_path.name))
+        #file_path.unlink()
 
 @main.command()
 def cleanup():
