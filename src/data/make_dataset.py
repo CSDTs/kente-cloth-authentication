@@ -214,26 +214,26 @@ def makeprocessed(interim_directory="./data/interim/",
     test_groups = inlier_test_groups | outlier_test_groups
 
     # ... finally we split the remaining data into balanced training and valdiation
+    non_group_mask =\
+        sampling_frame.query('group not in @test_groups').index    
     validation_indices, training_indices =\
             next(
                 StratifiedShuffleSplit(random_state=42,
                                        n_splits=1,
                                        test_size=0.5).split(
-                                       sampling_frame.query('group not in @test_groups')\
-                                                     .group,
-                                       sampling_frame.query('group not in @test_groups')\
-                                                     .y)
+                                       sampling_frame.iloc[non_group_mask].index,
+                                       sampling_frame.iloc[non_group_mask].y)
             )
 
     copy_to_directory = validation_directory
-    sampling_frame.loc[validation_indices]\
+    sampling_frame.iloc[validation_indices]\
                   .apply(lambda row: shutil.copy(
                       str(row.file_path),
                       str(copy_to_directory/row.file_path.name)),
                          axis=1)
 
     copy_to_directory = training_directory
-    sampling_frame.loc[training_indices]\
+    sampling_frame.iloc[training_indices]\
                   .apply(lambda row: shutil.copy(
                       str(row.file_path),
                       str(copy_to_directory/row.file_path.name)),

@@ -99,3 +99,134 @@ but the indices are indirectly derived from the interim_dir list
 So, that's actualy okay, since the gap is actually the evaluation set
 but I think I need to store the whole file path and just go off of that,
 when I indirectly link the glob() and the index things go awry
+--
+so the issue is that the trianing, validation indices include the test group,
+
+In [492]: sampling_frame.loc[validation_indices].group.unique()                                                                                      
+Out[492]: 
+array(['fake_002', 'real_eglash', 'fake_001', 'real_philadelphia_unk',
+       'real_spurlock_illinois_2011.05.0925.02',
+       'real_fowler_women_X98-16-2_front__studio',
+       'real_The_Met_1972.56.1_d1', 'real_miami_pinwheel_close_up',
+       'real_DIA_1990.25_o2', 'real_The_Met_hb_1993.384.2',
+       'real_The_Met_1972.56.1_d2', 'fake_003', 'real_miami_b',
+       'real_philadelphia_museum_2001-170-1a-pma', 'real_UNL_quilt',
+       'real_high_2004.166KenteCloth_o2', 'real_miami_a'], dtype=object)
+
+In [493]: sampling_frame.loc[training_indices].group.unique()                                                                                        
+Out[493]: 
+array(['real_The_Met_1972.56.1_d2', 'fake_001', 'fake_002', 'fake_003',
+       'real_high_2004.166KenteCloth_o2', 'real_miami_a',
+       'real_miami_pinwheel_close_up', 'real_UNL_quilt',
+       'real_DIA_1990.25_o2', 'real_fowler_women_X98-16-2_front__studio',
+       'real_philadelphia_museum_2001-170-1a-pma',
+       'real_philadelphia_unk', 'real_miami_b',
+       'real_The_Met_1972.56.1_d1', 'real_eglash',
+       'real_spurlock_illinois_2011.05.0925.02',
+       'real_The_Met_hb_1993.384.2'], dtype=object)
+
+
+even though we have
+    validation_indices, training_indices =\
+            next(
+                StratifiedShuffleSplit(random_state=42,
+                                       n_splits=1,
+                                       test_size=0.5).split(
+                                       sampling_frame.query('group not in @test_groups')\
+                                                     .group,
+                                       sampling_frame.query('group not in @test_groups')\
+                                                     .y)
+            )
+
+and 
+
+In [487]: test_groups                                                                                                                                
+Out[487]: 
+{'fake_001',
+ 'real_The_Met_1972.56.1_d2',
+ 'real_UNL_quilt',
+ 'real_fowler_women_X98-16-2_front__studio',
+ 'real_miami_a'}
+
+I wouldn't expect fake_001 to show up
+
+-----
+yeah,
+see
+
+
+In [498]: test_groups                                                                                                                                
+Out[498]: 
+{'fake_001',
+ 'real_The_Met_1972.56.1_d2',
+ 'real_UNL_quilt',
+ 'real_fowler_women_X98-16-2_front__studio',
+ 'real_miami_a'}
+
+In [499]:     validation_indices, training_indices =\ 
+     ...:             next( 
+     ...:                 StratifiedShuffleSplit(random_state=42, 
+     ...:                                        n_splits=1, 
+     ...:                                        test_size=0.5).split( 
+     ...:                                        sampling_frame.query('group not in @test_groups')\ 
+     ...:                                                      .group, 
+     ...:                                        sampling_frame.query('group not in @test_groups')\ 
+     ...:                                                      .y) 
+     ...:             )                                                                                                                              
+
+
+In [501]: sampling_frame.loc[training_indices].group.unique()                                                                                        
+Out[501]: 
+array(['real_The_Met_1972.56.1_d2', 'fake_001', 'fake_002', 'fake_003',
+       'real_high_2004.166KenteCloth_o2', 'real_miami_a',
+       'real_miami_pinwheel_close_up', 'real_UNL_quilt',
+       'real_DIA_1990.25_o2', 'real_fowler_women_X98-16-2_front__studio',
+       'real_philadelphia_museum_2001-170-1a-pma',
+       'real_philadelphia_unk', 'real_miami_b',
+       'real_The_Met_1972.56.1_d1', 'real_eglash',
+       'real_spurlock_illinois_2011.05.0925.02',
+       'real_The_Met_hb_1993.384.2'], dtype=object)
+---
+
+I wouldn't expect this to show up at all.
+-
+yet,
+
+In [502]: sampling_frame.query('group not in @test_groups').group.unique()                                                                           
+Out[502]: 
+array(['fake_003', 'real_miami_pinwheel_close_up', 'fake_002',
+       'real_DIA_1990.25_o2', 'real_The_Met_hb_1993.384.2',
+       'real_The_Met_1972.56.1_d1', 'real_high_2004.166KenteCloth_o2',
+       'real_miami_b', 'real_philadelphia_museum_2001-170-1a-pma',
+       'real_spurlock_illinois_2011.05.0925.02', 'real_eglash',
+       'real_philadelphia_unk'], dtype=object)
+
+       has no fake_001
+--
+this preserves it
+In [504]: foo = sampling_frame.query('group not in @test_groups').index                                                                              
+
+In [505]: sampling_frame.loc[foo].group.unique()                                                                                                     
+Out[505]: 
+array(['fake_003', 'real_miami_pinwheel_close_up', 'fake_002',
+       'real_DIA_1990.25_o2', 'real_The_Met_hb_1993.384.2',
+       'real_The_Met_1972.56.1_d1', 'real_high_2004.166KenteCloth_o2',
+       'real_miami_b', 'real_philadelphia_museum_2001-170-1a-pma',
+       'real_spurlock_illinois_2011.05.0925.02', 'real_eglash',
+       'real_philadelphia_unk'], dtype=object)
+----
+so it looks like the StratifiedShuffleSplit function is somehow
+sampling into the test group
+--
+okay I think it returns indices into the data passed in, not the value,
+so we need to use iloc instead of loc.
+actually, I think we might need to double index, present a restricted 
+set to the StratifiedShuffleSplit and then index into that. I thought it 
+would index into what was presented byt , well, I can prsent the
+restricted index values and then use iloc to use that, though.
+--
+that doesn't work
+defintely; somethign weird is happening. Will have to get back on this tmmrw.
+It might be easier here to genrate a new data frame from the non_group and
+go off of that.
+^
