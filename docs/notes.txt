@@ -230,3 +230,12 @@ defintely; somethign weird is happening. Will have to get back on this tmmrw.
 It might be easier here to genrate a new data frame from the non_group and
 go off of that.
 ^
+---
+3/10
+
+okay, so I ended up constructing copy of the data that only had 
+non test group samples. I'm not sure why working off the original dataset
+would still give me incides that occured in the test group but this removes
+that block, ugh.
+
+The files have been copied out to processed and can be used in the oc-svm repo.
