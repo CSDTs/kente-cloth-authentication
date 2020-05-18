@@ -158,20 +158,22 @@ def makeinterim(seed, width, height, input_filepath, output_filepath, target_wid
 
 
 @main.command()
-@click.option('--interim_directory', '-i', type=str)
-@click.option('--processed_directory', '-o', type=str)
-@click.option('--evaluation_directory', '-e', type=str)
-@click.option('--training_directory', '-e', type=str)
-@click.option('--validation_directory', '-e', type=str)
+@click.option('--interim_directory', '-i', type=str, default="./data/interim/")
+@click.option('--processed_directory', '-o', type=str, default="./data/processed/")
+@click.option('--evaluation_directory', '-e', type=str, default="./data/processed/evaluation/")
+@click.option('--training_directory', '-t', type=str, default="./data/processed/training/")
+@click.option('--validation_directory', '-v', type=str, default="./data/processed/validation/")
 @click.option('--number_outlier_test_groups', '-notg', type=int, default=1)
 @click.option('--number_inlier_test_groups', '-nitg', type=int, default=4)
 @click.option('--inlier', '-inl', default=1 , type=int)
 @click.option('--outlier', '-out', default=-1 , type=int)
-def makeprocessed(interim_directory="./data/interim/",
-                  processed_directory="./data/processed/",
-                  evaluation_directory="./data/processed/evaluation/",
-                  training_directory="./data/processed/training/",
-                  validation_directory="./data/processed/validation/",
+def makeprocessed(number_outlier_test_groups,
+                  number_inlier_test_groups,
+                  interim_directory,
+                  processed_directory,
+                  evaluation_directory,
+                  training_directory,
+                  validation_directory,
                   preserve_shuffle=False,
                   inlier=1,
                   outlier=-1):
@@ -208,7 +210,7 @@ def makeprocessed(interim_directory="./data/interim/",
         )
 
     #  ... we split this up into evaluation (testing) and then the remaining we
-    # split into validation and training. We foucs top down on how
+    # split into validation and training. We focus top down on how
     # many inlier and outlier groups the evaluation set should have, randomly chose those
     # then split the remaining instances 50%/50% to create the validation, training
     # groups.
