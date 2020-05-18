@@ -10,7 +10,7 @@ from pathlib import Path
 from sklearn.model_selection import StratifiedShuffleSplit
 from process_image import generate_subsections
 from dotenv import find_dotenv, load_dotenv
-from itertools import chain  
+from itertools import chain
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -20,16 +20,17 @@ logger = logging.getLogger(__name__)
 @click.option('--input_filepath', type=click.Path())
 @click.option('--output_filepath', type=click.Path())
 @click.option('--seed', type=int)
-@click.option('--number_per_real', type=int)
+# @click.option('--number_per_real', type=int)
+@click.option('--create_balanced_real_fake', type=int)
 @click.option('--width', type=int)
-@click.option('--number_per_fake', type=int)
+# @click.option('--number_per_fake', type=int)
 @click.option('--height', type=int)
 @click.option('--target_width', type=int)
 @click.option('--target_height', type=int)
 @click.option('--xrotation', type=int)
 @click.option('--yrotation', type=int)
 @click.option('--zrotation', type=int)
-def main(input_filepath, output_filepath, seed, width, height, target_width, target_height, xrotation, yrotation, zrotation, number_per_real, number_per_fake):
+def main(input_filepath, output_filepath, seed, width, height, target_width, target_height, xrotation, yrotation, zrotation, create_balanced_real_fake):
     """ Runs data processing scripts to turn raw data from (../raw) into
         cleaned data ready to be analyzed (saved in ../processed).
     """
@@ -83,8 +84,9 @@ def generate_three_data_splits():
 @click.option('--input_filepath', '-i', type=click.Path())
 @click.option('--output_filepath', '-o', type=click.Path())
 @click.option('--seed', type=int)
-@click.option('--number_per_real', type=int)
-@click.option('--number_per_fake', type=int)
+# @click.option('--number_per_real', type=int)
+# @click.option('--number_per_fake', type=int)
+@click.option('--create_balanced_real_fake', type=int)
 @click.option('--real_prefix', default="real")
 @click.option('--fake_prefix', default="fake")
 @click.option('--width', type=int)
@@ -94,8 +96,8 @@ def generate_three_data_splits():
 @click.option('--xrotation', type=int)
 @click.option('--yrotation', type=int)
 @click.option('--zrotation', type=int)
-def makeinterim(seed, width, height, input_filepath, output_filepath, target_width, target_height, xrotation, yrotation, zrotation, real_prefix, fake_prefix, number_per_real, number_per_fake):
-    # NOTE: Could make a lot more DRY but this is clearer and this is a 
+def makeinterim(seed, width, height, input_filepath, output_filepath, target_width, target_height, xrotation, yrotation, zrotation, real_prefix, fake_prefix, create_balanced_real_fake):
+    # NOTE: Could make a lot more DRY but this is clearer and this is a
     # single use util function
     interim_directory = "./data/interim/"
     #  make fake, real subdirectories within iterim so we can
@@ -104,7 +106,25 @@ def makeinterim(seed, width, height, input_filepath, output_filepath, target_wid
     fake_interim_directory.mkdir(parents=True, exist_ok=True)
     real_interim_directory = Path("./data/interim/real/")
     real_interim_directory.mkdir(parents=True, exist_ok=True)
-    
+
+    # Creating number_per_fake and number_per_real
+
+    real = 0
+    fake = 0
+
+    for filename in os.listdir('./data/raw'):
+
+        if filename.startswith('fake'):
+            fake = fake + 1
+
+        elif filename.startswith('real'):
+            real = real + 1
+
+    number_per_real = int(create_balanced_real_fake / real)
+    number_per_fake = int(create_balanced_real_fake / fake)
+
+
+
     if not Path(input_filepath).exists():
         print(f"Input path provided is: {input_filepath}")
         return
@@ -129,12 +149,12 @@ def makeinterim(seed, width, height, input_filepath, output_filepath, target_wid
                              target_height,
                              target_width,
                              (xrotation, yrotation, zrotation))
-                             
+
     # ... finally, we clean up the interim directories
     for directory in [fake_interim_directory, real_interim_directory]:
         for the_file in directory.glob('*'):
             the_file.unlink()
-        directory.rmdir() 
+        directory.rmdir()
 
 
 @main.command()
@@ -194,8 +214,8 @@ def makeprocessed(interim_directory="./data/interim/",
     # groups.
     #
     # This assumes that the evaluation groups represent a balanced set; the remaining
-    # data is stratified so that's much more balanced by design. If the original 
-    # data is balanced (which is is in my case) then everything will be roughly balanced 
+    # data is stratified so that's much more balanced by design. If the original
+    # data is balanced (which is is in my case) then everything will be roughly balanced
     inlier_test_groups =\
         set(
             sampling_frame.sample(frac=1, random_state=42)\
