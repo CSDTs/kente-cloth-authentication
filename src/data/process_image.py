@@ -5,10 +5,63 @@ import fnmatch
 import os
 import re
 import logging
+import random
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
+# https://www.freecodecamp.org/news/image-augmentation-make-it-rain-make-it-snow-how-to-modify-a-photo-with-machine-learning-163c0cb3843f/
 
+# change brightness
+
+def change_brightness(image, min_alpha=0.95):
+    # note we random.seed from generate_subsections should force
+    # determinism
+
+    lightness_scaler = random.uniform(min_alpha, 1)
+
+    image_HLS = cv2.cvtColor(image,cv2.COLOR_RGB2HLS)
+    image_HLS = np.array(image_HLS, dtype = np.float64)
+    random_brightness_coefficient =\
+        random.uniform(lightness_scaler, 1.1)
+    image_HLS[:,:,1] = image_HLS[:,:,1] * random_brightness_coefficient
+    image_HLS[:,:,1][image_HLS[:,:,1]>255]  = 255
+    image_HLS = np.array(image_HLS, dtype = np.uint8)
+    image_RGB = cv2.cvtColor(image_HLS,cv2.COLOR_HLS2RGB)
+    return image_RGB
+
+# add a shadow
+
+def generate_shadow_coordinates(imshape, no_of_shadows=1):
+    vertices_list=[]
+    for index in range(no_of_shadows):
+        vertex=[]
+        for dimensions in range(random.randint(3,15)):
+            vertex.append(
+                (imshape[1] * random.uniform(0,1),
+                 imshape[0]//3 + imshape[0] * random.uniform(0,1))
+            )
+            vertices = np.array([vertex], dtype=np.int32)
+            vertices_list.append(vertices)
+    return vertices_list
+
+def add_shadow(image, no_of_shadows=1, min_alpha=0.95):
+    # note we random.seed from generate_subsections should force
+    # determinism
+    lightness_scaler = random.uniform(min_alpha, 1)
+
+    image_HLS = cv2.cvtColor(image,cv2.COLOR_RGB2HLS)
+    mask = np.zeros_like(image)
+    imshape = image.shape
+    vertices_list = generate_shadow_coordinates(imshape, no_of_shadows)
+    for vertices in vertices_list:
+        cv2.fillPoly(mask, vertices, 10)
+        # note: L in HLS is last dimension, not second as suggested
+        # by the name HLS
+        image_HLS[:,:,1][mask[:,:,0]==10] =\
+            image_HLS[:,:,1][mask[:,:,0]==10] * lightness_scaler
+        image_RGB = cv2.cvtColor(image_HLS,cv2.COLOR_HLS2RGB)
+    return image_RGB
 
 def find_files(pattern, directory='.'):
     """
@@ -41,7 +94,8 @@ def generate_subsections(seed,
                          output_filepath,
                          target_width=None,
                          target_height=None,
-                         xyz = [0,0,0]):
+                         xyz = [0,0,0],
+                         min_alpha=0.95):
     """
     Usage
     ----------
@@ -106,7 +160,13 @@ def generate_subsections(seed,
                                                    gamma=xyz[2])
 
             # Crop image based of subsection dimensions
-            save_img = rotated_img[upper:lower, left:right]
+            crop_image = rotated_img[upper:lower, left:right]
+
+            # Change brightness
+            brightness = change_brightness(crop_image, min_alpha=min_alpha)
+
+            # Add a shadow
+            save_img = add_shadow(brightness, no_of_shadows=1, min_alpha=min_alpha)
 
             # Resize if target_{width, height} provided
             if target_height and target_width:
@@ -124,4 +184,3 @@ def generate_subsections(seed,
 
 #Example
 # generate_subsections(3123412,12,300,300,"../../data/raw/","../../data/processed/",(0,0,0))
-
